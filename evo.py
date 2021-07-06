@@ -3,6 +3,7 @@ import numpy as np
 from numpy.core.defchararray import rindex
 
 class Evo():
+    # Energy based
     def __init__(self, k_short, num_paths, num_pop, pos, mut_rate=0.1):
         self.k_short = k_short
         self.num_genes = len(k_short)
