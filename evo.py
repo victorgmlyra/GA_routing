@@ -3,12 +3,14 @@ import numpy as np
 from numpy.core.defchararray import rindex
 
 class Evo():
-    def __init__(self, k_short, num_paths, num_pop, mut_rate=0.1):
+    def __init__(self, k_short, num_paths, num_pop, pos, mut_rate=0.1):
         self.k_short = k_short
         self.num_genes = len(k_short)
         self.num_paths = num_paths
         self.num_pop = num_pop
         self.mut_rate = mut_rate
+
+        self.pos = pos  # Nodes positions
     
     def create_pop(self):
         self.population = np.random.randint(0, self.num_paths, size=(self.num_pop, self.num_genes))
@@ -24,6 +26,9 @@ class Evo():
                         self.cost[i,j,self.k_short[i,j][k] - 1] = 10
                     else:
                         self.cost[i,j,self.k_short[i,j][k] - 1] = 20
+                    travel = 0.04*(np.linalg.norm(np.array(self.pos[self.k_short[i,j][k]]) - np.array(self.pos[self.k_short[i,j][k-1]])))**2
+                    self.cost[i,j,self.k_short[i,j][k] - 1] += travel
+                    # print(travel, 'nodes', self.k_short[i,j][k], 'and', self.k_short[i,j][k-1])
     
 
     def fitness(self):

@@ -8,8 +8,8 @@ from itertools import islice
 num_points = 20
 max_dist = 40
 num_paths = 5
-num_iteractions = 200
-num_pop = 1000
+num_iteractions = 500
+num_pop = 300
 mut_chance = 0.1
 
 
@@ -62,7 +62,7 @@ G.add_weighted_edges_from(edges)
 # Plot graph
 points = list(map(tuple, nodes))
 pos = {i: point for i, point in enumerate(points)}
-draw_graph(G, points)
+draw_graph(G, points, True)
 
 # K Shortest Paths
 k_short_paths = []
@@ -72,7 +72,7 @@ for i in range(1, num_points):
 
 k_short_paths = np.array(k_short_paths)
 
-evolution = Evo(k_short_paths, num_paths, num_pop, mut_chance)
+evolution = Evo(k_short_paths, num_paths, num_pop, pos, mut_chance)
 best, grafico = evolution.fit(num_iteractions)
 
 # Plot do gráfico
