@@ -38,13 +38,13 @@ class Evo():
             for j in range(0,self.num_genes):
                 self.energy[i] += self.cost[j,self.population[i,j]]
         
-        self.energy = self.energy**2
-        self.energy = np.sum(self.energy, axis=1)
+        # self.energy = self.energy**2
+        self.energy = 10000 / np.max(self.energy, axis=1)
 
 
     def reproduction(self):
-        inv_energy = (1 / self.energy)
-        repro_chance = inv_energy / np.sum(inv_energy)
+        # inv_energy = (1 / self.energy)
+        repro_chance = self.energy / np.sum(self.energy)
         repro_chance = np.rint(repro_chance * self.num_pop * 10).astype(int)
         # print(repro_chance)
         

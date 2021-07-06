@@ -8,7 +8,7 @@ from itertools import islice
 num_points = 20
 max_dist = 40
 num_paths = 5
-num_iteractions = 500
+num_iteractions = 1000
 num_pop = 300
 mut_chance = 0.1
 
@@ -69,6 +69,8 @@ k_short_paths = []
 for i in range(1, num_points):
     s_path = k_shortest_paths(G, 0, i, num_paths, "weight")
     k_short_paths.append(s_path)
+    if i == 18:
+        print(s_path)
 
 k_short_paths = np.array(k_short_paths)
 
