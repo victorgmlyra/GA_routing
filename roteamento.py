@@ -9,7 +9,7 @@ num_points = 20
 max_dist = 40
 num_paths = 5
 num_iteractions = 1000
-num_pop = 300
+num_pop = 1000
 mut_chance = 0.1
 
 
@@ -89,8 +89,8 @@ for i, path in enumerate(best):
     s_path = k_short_paths[i, path]
     routes.append(s_path)
 
-print('Paths:')
-print(routes)
+for i in range(0,len(routes)):
+    print('Path for node',i+1,': ',routes[i])
 
 edges = []
 for r in routes:

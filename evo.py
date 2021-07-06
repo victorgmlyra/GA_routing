@@ -27,8 +27,8 @@ class Evo():
                         self.cost[i,j,self.k_short[i,j][k] - 1] = 10
                     else:
                         self.cost[i,j,self.k_short[i,j][k] - 1] = 20
-                    travel = 0.04*(np.linalg.norm(np.array(self.pos[self.k_short[i,j][k]]) - np.array(self.pos[self.k_short[i,j][k-1]])))**2
-                    self.cost[i,j,self.k_short[i,j][k] - 1] += travel
+                    # travel = 0.04*(np.linalg.norm(np.array(self.pos[self.k_short[i,j][k]]) - np.array(self.pos[self.k_short[i,j][k-1]])))**2
+                    # self.cost[i,j,self.k_short[i,j][k] - 1] += travel
                     # print(travel, 'nodes', self.k_short[i,j][k], 'and', self.k_short[i,j][k-1])
     
 
@@ -41,6 +41,12 @@ class Evo():
         # self.energy = self.energy**2
         self.energy = 10000 / np.max(self.energy, axis=1)
 
+    def lifetime(self, individual): 
+        energy_individual = np.zeros((self.num_genes))
+        for i in range(0,self.num_genes):
+            energy_individual += self.cost[i,individual[i]]
+        lifetime = 10000/(np.max(energy_individual))
+        return (lifetime, np.argmax(energy_individual)+1, energy_individual)
 
     def reproduction(self):
         # inv_energy = (1 / self.energy)
@@ -80,7 +86,9 @@ class Evo():
             best, fitness = self.reproduction()
             graf.append(fitness)
             self.mutate()
-            print('Best in iteration {}: '.format(i), best, ' Fitness: ', fitness)
+            lifetime, node, all_energies = self.lifetime(best)
+            print('Best in iteration {}: '.format(i), best, ' Fitness: ', lifetime ,' on node: ',node)
+        print(all_energies, '\n Soma: ',np.sum(all_energies))
         # print('Final Population:')
         # print(self.population)
         return best,graf
