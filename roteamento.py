@@ -120,7 +120,7 @@ if __name__ == '__main__':
     }
 
     # Build graph
-    G, pos = build_graph(params, True)
+    G, pos = build_graph(params, params['load_graph'])
     k_short_paths = find_all_k_short_paths(G, params)
 
     # Run genetic algorithm
