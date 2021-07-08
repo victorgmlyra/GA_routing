@@ -27,8 +27,8 @@ class Evo():
                         self.cost[i,j,self.k_short[i,j][k] - 1] = 10
                     else:
                         self.cost[i,j,self.k_short[i,j][k] - 1] = 20
-                    # travel = 0.04*(np.linalg.norm(np.array(self.pos[self.k_short[i,j][k]]) - np.array(self.pos[self.k_short[i,j][k-1]])))**2
-                    # self.cost[i,j,self.k_short[i,j][k] - 1] += travel
+                    travel = 0.04*(np.linalg.norm(np.array(self.pos[self.k_short[i,j][k]]) - np.array(self.pos[self.k_short[i,j][k-1]])))**2
+                    self.cost[i,j,self.k_short[i,j][k] - 1] += travel
     
 
     def fitness(self):
