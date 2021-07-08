@@ -4,20 +4,38 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from itertools import islice
 
-# PARAMETERS
-num_points = 20
-max_dist = 40
-num_paths = 5
-num_iteractions = 1000
-num_pop = 1000
-mut_chance = 0.1
-
 
 def k_shortest_paths(G, source, target, k, weight=None):
     return list(
         islice(nx.shortest_simple_paths(G, source, target, weight=weight), k)
     )
 
+def draw_graph_with_subpaths(best, k_short_paths, pos):
+    # Teste print 
+    fig, ax = plt.subplots()
+    SG=nx.Graph(name="mamaco")
+    routes = []
+    for i, path in enumerate(best):
+        s_path = k_short_paths[i, path]
+        routes.append(s_path)
+
+
+    for i in range(0,len(routes)):
+        print('Path for node',i+1,': ',routes[i])
+
+    edges = []
+    for r in routes:
+        route_edges = [(r[n],r[n+1]) for n in range(len(r)-1)]
+        SG.add_nodes_from(r)
+        SG.add_edges_from(route_edges)
+        edges.append(route_edges)
+
+    nx.draw_networkx_nodes(SG,pos=pos)
+    nx.draw_networkx_labels(SG,pos=pos)
+    colors = [tuple(np.random.rand(3)) for _ in range(len(pos)-1)]
+    linewidths = [1+n/2 for n in range(len(pos)-1)]
+    for ctr, edgelist in enumerate(edges):
+        nx.draw_networkx_edges(SG,pos=pos,edgelist=edgelist,edge_color = colors[ctr], width=linewidths[ctr])
 
 def draw_graph(G, pos, draw_weight=False):
     # Colors
@@ -40,78 +58,89 @@ def draw_graph(G, pos, draw_weight=False):
     ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
     # plt.show()
 
-# Create points
-nodes = np.random.rand(num_points, 2) * 100
-nodes[0] = np.array([0, 0])
-# nodes[num_points-1] = np.array([100, 100])
+def build_graph(params, load=True):
+    # Create points
+    if load:
+        nodes = np.load('nodes.npy')
+    else:
+        nodes = np.random.rand(params['num_points'], 2) * 100
+        nodes[0] = np.array([0, 0])
+    # nodes[num_points-1] = np.array([100, 100])
 
-nodes = np.load('nodes.npy')
-# np.save('nodes.npy', nodes)
+    # np.save('nodes.npy', nodes)
 
-edges = []
-for i in range(len(nodes)):
-    for j in range(i+1, len(nodes)):
-        dist = np.linalg.norm(nodes[i] - nodes[j])
-        if dist < max_dist:
-            edges.append((i, j, dist))
+    edges = []
+    for i in range(len(nodes)):
+        for j in range(i+1, len(nodes)):
+            dist = np.linalg.norm(nodes[i] - nodes[j])
+            if dist < params['max_dist']:
+                edges.append((i, j, dist))
 
-# Create graph
-G = nx.Graph()
-G.add_weighted_edges_from(edges)
+    # Create graph
+    G = nx.Graph()
+    G.add_weighted_edges_from(edges)
 
-# Plot graph
-points = list(map(tuple, nodes))
-pos = {i: point for i, point in enumerate(points)}
-draw_graph(G, points, True)
+    # Plot graph
+    points = list(map(tuple, nodes))
+    pos = {i: point for i, point in enumerate(points)}
+    draw_graph(G, points, True)
 
-# K Shortest Paths
-k_short_paths = []
-for i in range(1, num_points):
-    s_path = k_shortest_paths(G, 0, i, num_paths, "weight")
-    k_short_paths.append(s_path)
-    if i == 18:
-        print(s_path)
+    return G, pos
 
-k_short_paths = np.array(k_short_paths)
+def find_all_k_short_paths(G, params):
+    # K Shortest Paths
+    k_short_paths = []
+    for i in range(1, params['num_points']):
+        s_path = k_shortest_paths(G, 0, i, params['num_paths'], "weight")
+        k_short_paths.append(s_path)
 
-evolution = Evo(k_short_paths, num_paths, num_pop, pos, mut_chance)
-best, grafico = evolution.fit(num_iteractions)
+    k_short_paths = np.array(k_short_paths)
+    return k_short_paths
 
-# Plot do gráfico
-fig, ax = plt.subplots()
-plt.plot(grafico)
+def find_optimal(k_short_paths, pos, params):
+    evolution = Evo(k_short_paths, params['num_paths'], params['num_pop'], pos, params['mut_chance'], params['fitness_alg'])
+    return evolution.fit(params['num_iteractions'])
 
-# Teste print 
-fig, ax = plt.subplots()
-SG=nx.Graph(name="mamaco")
-routes = []
-for i, path in enumerate(best):
-    s_path = k_short_paths[i, path]
-    routes.append(s_path)
+if __name__ == '__main__':
+    # PARAMETERS
+    params = {
+        # Graph building
+        'num_points': 20,
+        'load_graph': True,
+        'max_dist': 40,
+        # K shortest paths
+        'num_paths': 5,
+        # GA params
+        'num_pop': 100,
+        'num_iteractions': 100,
+        'mut_chance': 0.1,
+        'fitness_alg': 'lifetime',    # energy, lifetime
+        # Plot
+        'plot': True
+    }
 
+    # Build graph
+    G, pos = build_graph(params, True)
+    k_short_paths = find_all_k_short_paths(G, params)
 
-for i in range(0,len(routes)):
-    print('Path for node',i+1,': ',routes[i])
+    # Run genetic algorithm
+    num_runs = 1    # Change to run multiple times
+    all_lifetimes, all_sum_energies = [], []
+    for i in range(num_runs):
+        best, evol_fit, lifetime, sum_energies, node = find_optimal(k_short_paths, pos, params)
+        print('Best: ', best, ' Lifetime: ', lifetime, ' for node: ', node, ' Sum energies: ',sum_energies)
+        print()
+        all_lifetimes.append(lifetime)
+        all_sum_energies.append(sum_energies)
 
-edges = []
-for r in routes:
-    route_edges = [(r[n],r[n+1]) for n in range(len(r)-1)]
-    SG.add_nodes_from(r)
-    SG.add_edges_from(route_edges)
-    edges.append(route_edges)
+    # Plot do gráfico
+    fig, ax = plt.subplots()
+    plt.plot(evol_fit)
+    # Plot graph with subpaths
+    draw_graph_with_subpaths(best, k_short_paths, pos)
+    if params['plot'] == True:
+        plt.show()
 
-nx.draw_networkx_nodes(SG,pos=pos)
-nx.draw_networkx_labels(SG,pos=pos)
-colors = [tuple(np.random.rand(3)) for _ in range(num_points-1)]
-linewidths = [1+n/2 for n in range(num_points-1)]
-for ctr, edgelist in enumerate(edges):
-    nx.draw_networkx_edges(SG,pos=pos,edgelist=edgelist,edge_color = colors[ctr], width=linewidths[ctr])
-
-
-    # # # Subgraph
-    # # s_path = nx.shortest_path(G, 0, i, "weight")
-    # sub_edges = [(s_path[i-1], s_path[i]) for i in range(1, len(s_path))]
-    # SG = G.edge_subgraph(sub_edges)
-    # draw_graph(SG, points, True)
-
-plt.show()
+    # Print
+    print('\nMean best lifetimes: {:.3f}'.format(np.mean(np.array(all_lifetimes))))
+    print('Mean best sum energies: {:.3f}'.format(np.mean(np.array(all_sum_energies))))

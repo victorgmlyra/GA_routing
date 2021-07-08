@@ -1,25 +1,24 @@
-from networkx.classes.function import selfloop_edges
 import numpy as np
 from numpy.core.defchararray import rindex
+from tqdm.std import tqdm
 
 class Evo():
-    # teste
-    # Energy based
-    def __init__(self, k_short, num_paths, num_pop, pos, mut_rate=0.1):
+    
+    def __init__(self, k_short, num_paths, num_pop, pos, mut_rate=0.1, fitness_alg='lifetime'):
         self.k_short = k_short
         self.num_genes = len(k_short)
         self.num_paths = num_paths
         self.num_pop = num_pop
         self.mut_rate = mut_rate
 
+        self.fitness_alg = fitness_alg  # Algorithm to calculate the fitness
+        self.min_algs = ['energy']
+
         self.pos = pos  # Nodes positions
     
     def create_pop(self):
         self.population = np.random.randint(0, self.num_paths, size=(self.num_pop, self.num_genes))
         self.cost = np.zeros((self.num_genes,self.num_paths,self.num_genes))
-
-        # print(self.population)
-        # print('-----------------------------------')
 
         for i in range (0,self.num_genes):
             for j in range (0,self.num_paths):
@@ -38,21 +37,19 @@ class Evo():
             for j in range(0,self.num_genes):
                 self.energy[i] += self.cost[j,self.population[i,j]]
         
-        # Lifetime based
-        self.energy = 10000 / np.max(self.energy, axis=1)
+        # Choose between different fitness algorithms
+        if self.fitness_alg == 'lifetime':
+            # Lifetime based
+            self.energy = 10000 / np.max(self.energy, axis=1)
+        elif self.fitness_alg == 'energy':
+            # Energy based
+            self.energy[np.arange(len(self.energy)), np.argmax(self.energy, axis=1)] **= 2 # Mágica - Fez funcionar
+            self.energy = self.energy**2
+            self.energy = np.sum(self.energy, axis=1)
+        else:
+            print('Fitness algorithm not recognized. Using default (Lifetime based)')
+            self.energy = 10000 / np.max(self.energy, axis=1)
 
-        # Energy based
-        self.energy[np.arange(len(self.energy)), np.argmax(self.energy, axis=1)] **= 2 # Mágica - Fez funcionar
-        self.energy = self.energy**2
-        self.energy = np.sum(self.energy, axis=1)
-
-
-    def lifetime(self, individual): 
-        energy_individual = np.zeros((self.num_genes))
-        for i in range(0,self.num_genes):
-            energy_individual += self.cost[i,individual[i]]
-        lifetime = 10000/(np.max(energy_individual))
-        return (lifetime, np.argmax(energy_individual)+1, energy_individual)
 
     def lifetime(self, individual): 
         energy_individual = np.zeros((self.num_genes))
@@ -62,15 +59,18 @@ class Evo():
         return lifetime, np.argmax(energy_individual)+1, energy_individual
 
     def reproduction(self):
-        # inv_energy = (1 / self.energy)
-        repro_chance = self.energy / np.sum(self.energy)
-        repro_chance = np.rint(repro_chance * self.num_pop * 10).astype(int)
-        # print(repro_chance)
-        
+        # Invert energy if needed to be a maximization problem
+        if self.fitness_alg in self.min_algs:
+            inv_energy = (1 / self.energy)
+            repro_chance = inv_energy / np.sum(inv_energy)
+        else:
+            repro_chance = self.energy / np.sum(self.energy)
+
+        repro_chance = np.rint(repro_chance * self.num_pop * 10).astype(int)        
         prob_array = np.repeat(self.population, repro_chance, axis=0)
 
+        # TODO: Keep the 20% best individuals
         new_pop = [self.population[np.argmax(repro_chance)]]
-        # new_pop = []
         while(len(new_pop) != self.num_pop):
             r_int = np.random.randint(0, len(prob_array), 2)
             p1 = prob_array[r_int[0]]
@@ -94,17 +94,17 @@ class Evo():
     def fit(self, num_iter):
         self.create_pop()
         graf = []
-        for i in range(num_iter):
+        t_otm = tqdm(range(num_iter))
+        for i in t_otm:
             self.fitness()
             best, fitness = self.reproduction()
             graf.append(fitness)
             self.mutate()
             lifetime, node, all_energies = self.lifetime(best)
-            print('Best in iteration {}: '.format(i), best, ' Fitness: ', fitness, 'Total lifetime: ',lifetime,'for node: ',node)
-        print(all_energies, '\n Soma: ', np.sum(all_energies))
-        # print('Final Population:')
-        # print(self.population)
-        return best,graf
+            t_otm.set_postfix(fitness=str(fitness), lifetime=str(lifetime), node=str(node))
+            # print('Best in iteration {}: '.format(i), best, ' Fitness: ', fitness, 'Total lifetime: ',lifetime,'for node: ',node)
+
+        return best, graf, lifetime, np.sum(all_energies), node
 
 if __name__ == '__main__':
     kk = np.array([
