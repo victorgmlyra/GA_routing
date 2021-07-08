@@ -4,6 +4,7 @@ from numpy.core.defchararray import rindex
 
 class Evo():
     # teste
+    # Energy based
     def __init__(self, k_short, num_paths, num_pop, pos, mut_rate=0.1):
         self.k_short = k_short
         self.num_genes = len(k_short)
@@ -27,9 +28,8 @@ class Evo():
                         self.cost[i,j,self.k_short[i,j][k] - 1] = 10
                     else:
                         self.cost[i,j,self.k_short[i,j][k] - 1] = 20
-                    # travel = 0.04*(np.linalg.norm(np.array(self.pos[self.k_short[i,j][k]]) - np.array(self.pos[self.k_short[i,j][k-1]])))**2
-                    # self.cost[i,j,self.k_short[i,j][k] - 1] += travel
-                    # print(travel, 'nodes', self.k_short[i,j][k], 'and', self.k_short[i,j][k-1])
+                    travel = 0.04*(np.linalg.norm(np.array(self.pos[self.k_short[i,j][k]]) - np.array(self.pos[self.k_short[i,j][k-1]])))**2
+                    self.cost[i,j,self.k_short[i,j][k] - 1] += travel
     
 
     def fitness(self):
@@ -38,8 +38,14 @@ class Evo():
             for j in range(0,self.num_genes):
                 self.energy[i] += self.cost[j,self.population[i,j]]
         
-        # self.energy = self.energy**2
+        # Lifetime based
         self.energy = 10000 / np.max(self.energy, axis=1)
+
+        # Energy based
+        self.energy[np.arange(len(self.energy)), np.argmax(self.energy, axis=1)] **= 2 # Mágica - Fez funcionar
+        self.energy = self.energy**2
+        self.energy = np.sum(self.energy, axis=1)
+
 
     def lifetime(self, individual): 
         energy_individual = np.zeros((self.num_genes))
@@ -47,6 +53,13 @@ class Evo():
             energy_individual += self.cost[i,individual[i]]
         lifetime = 10000/(np.max(energy_individual))
         return (lifetime, np.argmax(energy_individual)+1, energy_individual)
+
+    def lifetime(self, individual): 
+        energy_individual = np.zeros((self.num_genes))
+        for i in range(0,self.num_genes):
+            energy_individual += self.cost[i,individual[i]]
+        lifetime = 10000/(np.max(energy_individual))
+        return lifetime, np.argmax(energy_individual)+1, energy_individual
 
     def reproduction(self):
         # inv_energy = (1 / self.energy)
@@ -87,8 +100,8 @@ class Evo():
             graf.append(fitness)
             self.mutate()
             lifetime, node, all_energies = self.lifetime(best)
-            print('Best in iteration {}: '.format(i), best, ' Fitness: ', lifetime ,' on node: ',node)
-        print(all_energies, '\n Soma: ',np.sum(all_energies))
+            print('Best in iteration {}: '.format(i), best, ' Fitness: ', fitness, 'Total lifetime: ',lifetime,'for node: ',node)
+        print(all_energies, '\n Soma: ', np.sum(all_energies))
         # print('Final Population:')
         # print(self.population)
         return best,graf

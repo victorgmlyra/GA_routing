@@ -89,6 +89,7 @@ for i, path in enumerate(best):
     s_path = k_short_paths[i, path]
     routes.append(s_path)
 
+
 for i in range(0,len(routes)):
     print('Path for node',i+1,': ',routes[i])
 
