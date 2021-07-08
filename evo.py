@@ -101,7 +101,7 @@ class Evo():
             graf.append(fitness)
             self.mutate()
             lifetime, node, all_energies = self.lifetime(best)
-            t_otm.set_postfix(fitness=str(fitness), lifetime=str(lifetime), node=str(node))
+            t_otm.set_postfix(fitness='{:.2f}'.format(fitness), lifetime='{:.2f}'.format(lifetime), node=str(node))
             # print('Best in iteration {}: '.format(i), best, ' Fitness: ', fitness, 'Total lifetime: ',lifetime,'for node: ',node)
 
         return best, graf, lifetime, np.sum(all_energies), node
