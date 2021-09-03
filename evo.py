@@ -106,16 +106,3 @@ class Evo():
 
         return best, graf, lifetime, np.sum(all_energies), node
 
-if __name__ == '__main__':
-    kk = np.array([
-        [[0, 2, 3], [0, 2, 3]],
-        [[0, 3, 4], [0, 4, 1]],
-        [[0, 3, 4], [0, 4, 1]],
-        [[0, 3, 4], [0, 4, 1]],
-        [[0, 3, 4], [0, 4, 1]],
-    ])
-
-    mama = Evo(kk,2,3)
-    mama.create_pop()
-    # mama.reproduction()
-    mama.mutate()
