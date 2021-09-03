@@ -13,7 +13,7 @@ def k_shortest_paths(G, source, target, k, weight=None):
 def draw_graph_with_subpaths(best, k_short_paths, pos):
     # Teste print 
     fig, ax = plt.subplots()
-    SG=nx.Graph(name="mamaco")
+    SG=nx.Graph(name="graph")
     routes = []
     for i, path in enumerate(best):
         s_path = k_short_paths[i, path]
